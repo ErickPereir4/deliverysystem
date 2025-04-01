@@ -1,9 +1,8 @@
 #include <stdio.h>     // Funções para entrada e saída padrão (printf, scanf, etc.)
 #include <string.h>    // Funções para manipulação de strings (strcmp, strcpy, strlen, etc.)
 #include <stdlib.h>    // Funções gerais da biblioteca padrão, como alocação de memória (malloc, free), conversões (atoi, atof), etc.
-#include <ctype.h>     // Funções para manipulação de caracteres, como verificar se é alfanumérico, maiúsculo, minúsculo, etc. (isalpha, isdigit, toupper, etc.)
 #include <unistd.h>    // Funções para operações de sistema, como manipulação de arquivos e diretórios (sleep, fork, read, write, etc.)
-#include <locale.h>    // Funções para manipulação de configurações de localidade (setlocale) que afetam formatação de data, hora, moeda, etc.
+#include <locale.h>  // Necessário para setlocale()
 
 
 // Configuração para Windows
@@ -14,7 +13,7 @@
 #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
 #endif
 
-void habilitar_cores_windows() {
+void configurarTerminalWindows() {
     // Configurar para UTF-8 primeiro
     SetConsoleOutputCP(CP_UTF8);
     
@@ -80,7 +79,7 @@ void configurar_ambiente() {
     setlocale(LC_ALL, "en_US.UTF-8");
     
     #ifdef _WIN32
-    habilitar_cores_windows();
+    configurarTerminalWindows();
     #endif
 }
 //É usada para limpar o console antes de exibir novas informações, melhorando a organização da saída.
@@ -125,7 +124,7 @@ void menu_principal() {
 
 //Sempre que o array atingir sua capacidade máxima (ou seja, quando o buffer "estourar"), 
 // essa função dobra o tamanho disponível, garantindo que novos elementos possam ser armazenados sem erro.
-void redimensionar_array(void **array, int *capacidade, size_t tamanho_elemento) {
+void redimensionarVetor(void **array, int *capacidade, size_t tamanho_elemento) {
     int nova_capacidade = (*capacidade == 0) ? 1 : *capacidade * 2;
     void *novo = realloc(*array, nova_capacidade * tamanho_elemento);
     if (!novo) {
@@ -142,7 +141,7 @@ void cadastrar_cliente() {
     printf(BOLD CYAN "=== CADASTRAR CLIENTE ===\n\n" RESET);
     
     if (total_clientes >= capacidade_clientes) {
-        redimensionar_array((void **)&clientes, &capacidade_clientes, sizeof(Cliente));
+        redimensionarVetor((void **)&clientes, &capacidade_clientes, sizeof(Cliente));
     }
     
     printf(BLUE "Nome: " RESET);
@@ -239,7 +238,7 @@ void editar_cliente() {
 }
 
 // Menu : Opção 04 - Remover Cliente.
-void remover_cliente() {
+void excluir_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== REMOVER CLIENTE ===\n\n" RESET);
     
@@ -348,7 +347,7 @@ void fazer_pedido() {
     }
     
     if (total_pedidos >= capacidade_pedidos) {
-        redimensionar_array((void **)&pedidos, &capacidade_pedidos, sizeof(Pedido));
+        redimensionarVetor((void **)&pedidos, &capacidade_pedidos, sizeof(Pedido));
     }
     
     strncpy(pedidos[total_pedidos].cliente, clientes[cliente_idx-1].nome, 50);
@@ -451,7 +450,7 @@ int main() {
             case 1: cadastrar_cliente(); break;
             case 2: listar_clientes(); break;
             case 3: editar_cliente(); break;
-            case 4: remover_cliente(); break;
+            case 4: excluir_cliente(); break;
             case 5: fazer_pedido(); break;
             case 6: resumo_pedidos(); break;
             case 7: simular_entrega(); break;
