@@ -82,29 +82,25 @@ void configurar_ambiente() {
     configurarTerminalWindows();
     #endif
 }
-//É usada para limpar o console antes de exibir novas informações, melhorando a organização da saída.
+
 void limpar_tela() {
-    // Usado para limpar o console do windons.
     #ifdef _WIN32
         system("cls");
     #else
-    // Usado para limpar o console do MAC.
         system("clear");
     #endif
 }
-//limpar os caracteres que sobraram no buffer de entrada do teclado, 
-// principalmente após o uso de scanf(), evitando comportamentos inesperados na leitura de dados.
+
 void limpar_buffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
-// Executado no final de cada função do menu principal.
+
 void pausar() {
     printf(BLUE "\nPressione Enter para continuar..." RESET);
     limpar_buffer();
 }
 
-// Menu Principal.
 void menu_principal() {
     limpar_tela();
     printf(BOLD CYAN "=================================\n");
@@ -116,14 +112,13 @@ void menu_principal() {
     printf(RED "4." BLUE " Remover Cliente\n" RESET);
     printf(RED "5." BLUE " Fazer Pedido\n" RESET);
     printf(RED "6." BLUE " Resumo de Pedidos\n" RESET);
-    printf(RED "7." BLUE " Simular Entrega\n" RESET);
-    printf(RED "8." BLUE " Sair\n" RESET);
+    printf(RED "7." BLUE " Editar Pedido\n" RESET);  // Nova opção
+    printf(RED "8." BLUE " Simular Entrega\n" RESET);
+    printf(RED "9." BLUE " Sair\n" RESET);
     printf(BOLD CYAN "=================================\n");
     printf(RESET BOLD "Escolha uma opção: " RESET);
 }
 
-//Sempre que o array atingir sua capacidade máxima (ou seja, quando o buffer "estourar"), 
-// essa função dobra o tamanho disponível, garantindo que novos elementos possam ser armazenados sem erro.
 void redimensionarVetor(void **array, int *capacidade, size_t tamanho_elemento) {
     int nova_capacidade = (*capacidade == 0) ? 1 : *capacidade * 2;
     void *novo = realloc(*array, nova_capacidade * tamanho_elemento);
@@ -135,7 +130,6 @@ void redimensionarVetor(void **array, int *capacidade, size_t tamanho_elemento) 
     *capacidade = nova_capacidade;
 }
 
-// Menu : Opção 01 - Cadastrar Cliente.
 void cadastrar_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== CADASTRAR CLIENTE ===\n\n" RESET);
@@ -163,7 +157,6 @@ void cadastrar_cliente() {
     pausar();
 }
 
-// Menu : Opção 02 - Listar Clientes.
 void listar_clientes() {
     limpar_tela();
     printf(BOLD CYAN "=== LISTA DE CLIENTES ===\n\n" RESET);
@@ -187,7 +180,6 @@ void listar_clientes() {
     pausar();
 }
 
-// Menu : Opção 03 - Editar Cliente.
 void editar_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== EDITAR CLIENTE ===\n\n" RESET);
@@ -237,7 +229,6 @@ void editar_cliente() {
     pausar();
 }
 
-// Menu : Opção 04 - Remover Cliente.
 void excluir_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== REMOVER CLIENTE ===\n\n" RESET);
@@ -280,7 +271,6 @@ void excluir_cliente() {
     pausar();
 }
 
-// Menu : Opção 05 - Mostrar Cárdapio.
 void mostrar_cardapio() {
     printf(BOLD CYAN "\n================================ CARDÁPIO ================================\n");
     printf("| Nº | PIZZA            | INGREDIENTES                              | PREÇO   |\n");
@@ -295,7 +285,6 @@ void mostrar_cardapio() {
     printf(BOLD CYAN "---------------------------------------------------------------------------\n" RESET);
 }
 
-// Menu : Opção 06 - Fazer Pedido.
 void fazer_pedido() {
     limpar_tela();
     printf(BOLD CYAN "=== FAZER PEDIDO ===\n\n" RESET);
@@ -363,7 +352,6 @@ void fazer_pedido() {
     pausar();
 }
 
-// Menu : Opção 07 - Resumo Pedidos.
 void resumo_pedidos() {
     limpar_tela();
     printf(BOLD CYAN "=== RESUMO DE PEDIDOS ===\n\n" RESET);
@@ -376,10 +364,11 @@ void resumo_pedidos() {
     
     float total = 0;
     printf(BOLD WHITE "===========================================\n");
-    printf("| CLIENTE          | PIZZA            | VALOR   |\n");
+    printf("| ID | CLIENTE          | PIZZA            | VALOR   |\n");
     printf("-------------------------------------------\n" RESET);
     for (int i = 0; i < total_pedidos; i++) {
-        printf("| %-16s | %-16s | " GREEN "R$%-6.2f" RESET " |\n", 
+        printf("| %-2d | %-16s | %-16s | " GREEN "R$%-6.2f" RESET " |\n", 
+               i+1,
                pedidos[i].cliente, 
                pedidos[i].pizza, 
                pedidos[i].preco);
@@ -389,6 +378,98 @@ void resumo_pedidos() {
     printf("| TOTAL                             | " GREEN "R$%-6.2f" WHITE " |\n", total);
     printf("===========================================\n" RESET);
     
+    pausar();
+}
+
+// Nova função para editar pedidos
+void editar_pedido() {
+    limpar_tela();
+    printf(BOLD CYAN "=== EDITAR PEDIDO ===\n\n" RESET);
+    
+    if (total_pedidos == 0) {
+        printf(YELLOW "Nenhum pedido registrado.\n" RESET);
+        pausar();
+        return;
+    }
+    
+    resumo_pedidos();
+    
+    int id;
+    printf(BLUE "\nDigite o ID do pedido que deseja editar: " RESET);
+    if (scanf("%d", &id) != 1) {
+        printf(RED "\nID inválido!\n" RESET);
+        limpar_buffer();
+        pausar();
+        return;
+    }
+    limpar_buffer();
+    
+    if (id < 1 || id > total_pedidos) {
+        printf(RED "\nID inválido!\n" RESET);
+        pausar();
+        return;
+    }
+    
+    int index = id - 1;
+    
+    printf(BLUE "\nEditando pedido:\n" RESET);
+    printf(BLUE "Cliente atual: %s\n" RESET, pedidos[index].cliente);
+    printf(BLUE "Pizza atual: %s\n" RESET, pedidos[index].pizza);
+    printf(BLUE "Preço atual: " GREEN "R$%.2f\n\n" RESET, pedidos[index].preco);
+    
+    // Mostrar clientes disponíveis
+    printf(BOLD CYAN "=== CLIENTES DISPONÍVEIS ===\n" RESET);
+    for (int i = 0; i < total_clientes; i++) {
+        printf(BLUE "%d. %s\n" RESET, i+1, clientes[i].nome);
+    }
+    
+    int novo_cliente;
+    printf(BLUE "\nEscolha o novo cliente (0 para manter o atual): " RESET);
+    if (scanf("%d", &novo_cliente) != 1) {
+        printf(RED "\nEntrada inválida!\n" RESET);
+        limpar_buffer();
+        pausar();
+        return;
+    }
+    limpar_buffer();
+    
+    if (novo_cliente > 0) {
+        if (novo_cliente < 1 || novo_cliente > total_clientes) {
+            printf(RED "\nCliente inválido!\n" RESET);
+            pausar();
+            return;
+        }
+        strncpy(pedidos[index].cliente, clientes[novo_cliente-1].nome, 50);
+    }
+    
+    // Mostrar cardápio
+    mostrar_cardapio();
+    
+    int nova_pizza;
+    printf(BLUE "\nEscolha a nova pizza (0 para manter a atual): " RESET);
+    if (scanf("%d", &nova_pizza) != 1) {
+        printf(RED "\nEntrada inválida!\n" RESET);
+        limpar_buffer();
+        pausar();
+        return;
+    }
+    limpar_buffer();
+    
+    if (nova_pizza > 0) {
+        if (nova_pizza < 1 || nova_pizza > total_pizzas) {
+            printf(RED "\nPizza inválida!\n" RESET);
+            pausar();
+            return;
+        }
+        strncpy(pedidos[index].pizza, cardapio[nova_pizza-1].nome, 50);
+        pedidos[index].preco = cardapio[nova_pizza-1].preco;
+    }
+    
+    printf(GREEN "\nPedido editado com sucesso!\n" RESET);
+    printf(BLUE "-> Novo pedido: %s para %s - " GREEN "R$%.2f\n" RESET, 
+           pedidos[index].pizza, 
+           pedidos[index].cliente, 
+           pedidos[index].preco);
     pausar();
 }
 
@@ -430,11 +511,9 @@ void liberar_memoria() {
     free(pedidos);
 }
 
-// Menu principal 
 int main() {
-    // Chama essa função para Permite o UTF8 para gerar os emojis e permite palavras acentuadas.
     configurar_ambiente();
-    //Gerar erro caso a opção inserida não seja uma das 8 opções.
+    
     int opcao;
     do {
         menu_principal();
@@ -445,7 +524,7 @@ int main() {
             continue;
         }
         limpar_buffer();
-        // cada opção chama a função correspondente.
+        
         switch(opcao) {
             case 1: cadastrar_cliente(); break;
             case 2: listar_clientes(); break;
@@ -453,11 +532,12 @@ int main() {
             case 4: excluir_cliente(); break;
             case 5: fazer_pedido(); break;
             case 6: resumo_pedidos(); break;
-            case 7: simular_entrega(); break;
-            case 8: printf(BLUE "\nSaindo do sistema...\n" RESET); break;
+            case 7: editar_pedido(); break;  // Nova opção
+            case 8: simular_entrega(); break;
+            case 9: printf(BLUE "\nSaindo do sistema...\n" RESET); break;
             default: printf(RED "\nOpção inválida! Tente novamente.\n" RESET); pausar(); break;
         }
-    } while(opcao != 8);
+    } while(opcao != 9);
     
     liberar_memoria();
     return 0;
