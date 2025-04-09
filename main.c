@@ -1,9 +1,8 @@
-#include <stdio.h>     // Funções para entrada e saída padrão (printf, scanf, etc.)
-#include <string.h>    // Funções para manipulação de strings (strcmp, strcpy, strlen, etc.)
-#include <stdlib.h>    // Funções gerais da biblioteca padrão, como alocação de memória (malloc, free), conversões (atoi, atof), etc.
-#include <unistd.h>    // Funções para operações de sistema, como manipulação de arquivos e diretórios (sleep, fork, read, write, etc.)
-#include <locale.h>  // Necessário para setlocale()
-
+#include <stdio.h>     // printf, scanf, fgets
+#include <string.h>    // strcpy, strncpy, strcspn
+#include <stdlib.h>    // realloc, free, system
+#include <unistd.h>    // sleep
+#include <locale.h>  // setlocale  
 
 // Configuração para Windows
 #ifdef _WIN32
@@ -14,10 +13,7 @@
 #endif
 
 void configurarTerminalWindows() {
-    // Configurar para UTF-8 primeiro
     SetConsoleOutputCP(CP_UTF8);
-    
-    // Depois habilitar processamento de terminal virtual
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE) return;
     
@@ -40,7 +36,6 @@ void configurarTerminalWindows() {
 #define RESET   "\x1B[0m"
 #define BOLD    "\x1B[1m"
 
-// Serve para criar instâncias.
 typedef struct {
     char nome[50];
     char endereco[100];
@@ -62,22 +57,22 @@ typedef struct {
 Cliente *clientes = NULL;
 Pedido *pedidos = NULL;
 Pizza cardapio[] = {
-    {"Margherita", "Molho de tomate, mussarela fresca, manjericão", 45.90},
-    {"Calabresa", "Molho de tomate, mussarela, calabresa fatiada, cebola", 52.50},
-    {"Quatro Queijos", "Molho de tomate, mussarela, provolone, parmesão, gorgonzola", 58.00},
-    {"Portuguesa", "Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas", 55.75},
-    {"Frango Catupiry", "Molho de tomate, mussarela, frango desfiado, catupiry", 59.90}
+    {"Margherita", "Molho de tomate, mussarela fresca, manjericão",                       45.90},
+    {"Calabresa", "Molho de tomate, mussarela, calabresa fatiada, cebola",                52.50},
+    {"Quatro Queijos", "Molho de tomate, mussarela, provolone, parmesão, gorgonzola",     58.00},
+    {"Portuguesa", "Molho de tomate, mussarela, presunto, ovos, cebola, azeitonas",       55.75},
+    {"Frango Catupiry", "Molho de tomate, mussarela, frango desfiado, catupiry",          59.90},
+    {"Pepperoni", "Molho de tomate, mussarela, pepperoni em abundância",                  60.00},
+    {"Vegetariana", "Molho de tomate, mussarela, pimentão, cogumelos, cebola, azeitonas", 56.50}
 };
 int total_clientes = 0;
 int total_pedidos = 0;
-int total_pizzas = 5;
+int total_pizzas = 7;  
 int capacidade_clientes = 0;
 int capacidade_pedidos = 0;
 
 void configurar_ambiente() {
-    // Configurar locale para suportar UTF-8
     setlocale(LC_ALL, "en_US.UTF-8");
-    
     #ifdef _WIN32
     configurarTerminalWindows();
     #endif
@@ -112,7 +107,7 @@ void menu_principal() {
     printf(RED "4." BLUE " Remover Cliente\n" RESET);
     printf(RED "5." BLUE " Fazer Pedido\n" RESET);
     printf(RED "6." BLUE " Resumo de Pedidos\n" RESET);
-    printf(RED "7." BLUE " Editar Pedido\n" RESET);  // Nova opção
+    printf(RED "7." BLUE " Editar Pedido\n" RESET);  
     printf(RED "8." BLUE " Simular Entrega\n" RESET);
     printf(RED "9." BLUE " Sair\n" RESET);
     printf(BOLD CYAN "=================================\n");
@@ -130,6 +125,23 @@ void redimensionarVetor(void **array, int *capacidade, size_t tamanho_elemento) 
     *capacidade = nova_capacidade;
 }
 
+void mostrar_cardapio() {
+    printf(BOLD CYAN "\n╔════╦══════════════════╦════════════════════════════════════════════════════════════════════╦════════════╗\n");
+    printf("║ %-2s ║ %-16s ║ %-64s   ║ %-10s  ║\n", "Nº", "PIZZA", "INGREDIENTES", "PREÇO");
+    printf("╠════╬══════════════════╬════════════════════════════════════════════════════════════════════╬════════════╣\n" RESET);
+    
+    for (int i = 0; i < total_pizzas; i++) {
+        printf("║ %-2d ║ %-16s ║ %-67s ║ " GREEN "R$%-7.2f" RESET " ║\n", 
+               i+1, 
+               cardapio[i].nome, 
+               cardapio[i].ingredientes, 
+               cardapio[i].preco);
+    }
+    
+    printf(BOLD CYAN "╚════╩══════════════════╩════════════════════════════════════════════════════════════════════╩════════════╝\n" RESET);
+}
+// Opção 01
+//----------------------------------------------------------------------------------------------
 void cadastrar_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== CADASTRAR CLIENTE ===\n\n" RESET);
@@ -156,7 +168,8 @@ void cadastrar_cliente() {
     printf(GREEN "\nCliente cadastrado com sucesso!\n" RESET);
     pausar();
 }
-
+// Opção 02
+//----------------------------------------------------------------------------------------------
 void listar_clientes() {
     limpar_tela();
     printf(BOLD CYAN "=== LISTA DE CLIENTES ===\n\n" RESET);
@@ -168,10 +181,10 @@ void listar_clientes() {
     }
     
     printf(BOLD WHITE "-------------------------------------------------\n");
-    printf("| ID | NOME             | ENDEREÇO           |\n");
+    printf("| ID | NOME             | ENDEREÇO             |\n");
     printf("-------------------------------------------------\n" RESET);
     for (int i = 0; i < total_clientes; i++) {
-        printf("| %-2d | %-15s | %-20s |\n", 
+        printf("| %-2d | %-15s  | %-20s |\n", 
                i+1, 
                clientes[i].nome, 
                clientes[i].endereco);
@@ -179,7 +192,8 @@ void listar_clientes() {
     printf(BOLD WHITE "-------------------------------------------------\n" RESET);
     pausar();
 }
-
+// Opção 03
+//----------------------------------------------------------------------------------------------
 void editar_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== EDITAR CLIENTE ===\n\n" RESET);
@@ -228,7 +242,8 @@ void editar_cliente() {
     printf(GREEN "\nCliente editado com sucesso!\n" RESET);
     pausar();
 }
-
+// Opção 04
+//----------------------------------------------------------------------------------------------
 void excluir_cliente() {
     limpar_tela();
     printf(BOLD CYAN "=== REMOVER CLIENTE ===\n\n" RESET);
@@ -270,21 +285,8 @@ void excluir_cliente() {
     printf(GREEN "\nCliente '%s' removido com sucesso!\n" RESET, nome);
     pausar();
 }
-
-void mostrar_cardapio() {
-    printf(BOLD CYAN "\n================================ CARDÁPIO ================================\n");
-    printf("| Nº | PIZZA            | INGREDIENTES                              | PREÇO   |\n");
-    printf("---------------------------------------------------------------------------\n" RESET);
-    for (int i = 0; i < total_pizzas; i++) {
-        printf("| %-2d | %-15s | %-40s | " GREEN "R$%-6.2f" RESET " |\n", 
-               i+1, 
-               cardapio[i].nome, 
-               cardapio[i].ingredientes, 
-               cardapio[i].preco);
-    }
-    printf(BOLD CYAN "---------------------------------------------------------------------------\n" RESET);
-}
-
+// Opção 05
+//----------------------------------------------------------------------------------------------
 void fazer_pedido() {
     limpar_tela();
     printf(BOLD CYAN "=== FAZER PEDIDO ===\n\n" RESET);
@@ -351,7 +353,8 @@ void fazer_pedido() {
            cardapio[pizza_idx-1].preco);
     pausar();
 }
-
+// Opção 06
+//----------------------------------------------------------------------------------------------
 void resumo_pedidos() {
     limpar_tela();
     printf(BOLD CYAN "=== RESUMO DE PEDIDOS ===\n\n" RESET);
@@ -363,9 +366,9 @@ void resumo_pedidos() {
     }
     
     float total = 0;
-    printf(BOLD WHITE "===========================================\n");
-    printf("| ID | CLIENTE          | PIZZA            | VALOR   |\n");
-    printf("-------------------------------------------\n" RESET);
+    printf(BOLD WHITE "======================================================\n");
+    printf("| ID | CLIENTE          | PIZZA            | VALOR    |\n");
+    printf("------------------------------------------------------\n" RESET);
     for (int i = 0; i < total_pedidos; i++) {
         printf("| %-2d | %-16s | %-16s | " GREEN "R$%-6.2f" RESET " |\n", 
                i+1,
@@ -374,14 +377,14 @@ void resumo_pedidos() {
                pedidos[i].preco);
         total += pedidos[i].preco;
     }
-    printf(BOLD WHITE "-------------------------------------------\n");
-    printf("| TOTAL                             | " GREEN "R$%-6.2f" WHITE " |\n", total);
-    printf("===========================================\n" RESET);
+    printf(BOLD WHITE "------------------------------------------------------\n");
+    printf("| TOTAL                                    | " GREEN "R$%-6.2f" WHITE " |\n", total);
+    printf("======================================================\n" RESET);
     
     pausar();
 }
-
-// Nova função para editar pedidos
+// Opção 07
+//----------------------------------------------------------------------------------------------
 void editar_pedido() {
     limpar_tela();
     printf(BOLD CYAN "=== EDITAR PEDIDO ===\n\n" RESET);
@@ -442,7 +445,6 @@ void editar_pedido() {
         strncpy(pedidos[index].cliente, clientes[novo_cliente-1].nome, 50);
     }
     
-    // Mostrar cardápio
     mostrar_cardapio();
     
     int nova_pizza;
@@ -472,7 +474,8 @@ void editar_pedido() {
            pedidos[index].preco);
     pausar();
 }
-
+// Opção 08
+//----------------------------------------------------------------------------------------------
 void simular_entrega() {
     limpar_tela();
     printf(BOLD CYAN "=== SIMULAR ENTREGA ===\n\n" RESET);
@@ -532,7 +535,7 @@ int main() {
             case 4: excluir_cliente(); break;
             case 5: fazer_pedido(); break;
             case 6: resumo_pedidos(); break;
-            case 7: editar_pedido(); break;  // Nova opção
+            case 7: editar_pedido(); break;  
             case 8: simular_entrega(); break;
             case 9: printf(BLUE "\nSaindo do sistema...\n" RESET); break;
             default: printf(RED "\nOpção inválida! Tente novamente.\n" RESET); pausar(); break;
